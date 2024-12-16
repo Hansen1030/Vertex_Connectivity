@@ -1,0 +1,227 @@
+\documentclass{article}
+
+% Packages
+\usepackage{titling}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{setspace}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{cite}
+\usepackage{pdfpages}
+
+% Page setup
+\geometry{a4paper, margin=1in}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+
+% Metadata
+\newcommand{\psetauthor}[1]{\author{#1}}
+\setlength{\parindent}{0pt}
+
+\newenvironment{problem}[1]{
+  \clearpage
+  \section*{Problem #1}
+}{
+  \clearpage
+}
+
+\doublespacing
+\begin{document}
+
+% Title Page
+\title{Report on paper:
+ \\ \textit{Vertex Connectivity in Poly-logarithmic Max-flows}
+ \\ \small{Presentation outline is in Appendix}}
+\psetauthor{Hansheng Liu (hl58)}
+\date{\today}
+\maketitle
+\clearpage
+
+\begin{section}{Introduction}
+The \textbf{vertex connectivity} of a graph $G$ is the minimum $k$ s.t. for some $S \subseteq V(G)$ with $|S| = k$, graph $G - S$ either is disconnected or has at most one vertex. Connectivity is one of the most important and well-studies problems in graph theory. It can also be applied in many fields such as Computer Science and Tranportation. However, the algorithm to compute the vertex connectivity for a given graph is not an easy problem. For a long time, the best algorithm people have requires a running time of $\tilde{O}(mn)$ \cite{vertex_connectivity_henzinger}. In 2021, Saranurak et al. proposed a new algorithm that reduced the vertec connectivity problem to polylog maxflow instances \cite{vertex_connectivity}. In 2022, Chen et al. gave an algorithm that compute the maxflow in $m^{1 + O(1)}$ time \cite{max_flow_min_cost}, which can be used as a black box and make the vertex connectivity be computed in $\tilde{O}(m)$. In this report, we will focus on the idea of how to reduce vertex connectivity problems into polylog maxflow instances. 
+\end{section}
+
+\begin{section}{The main algorithm and its analysis}
+  \begin{subsection}{Basic settings and assumptions}
+    Let $|V(G)| = n$, $|E(G)| = m$. Let $S$ where $|S| = k$ denote the smallest cut. There will be at least two connected components (if $G$ is not $K_n$) in $G - S$. Let the smallest one be $L$, others be $R$. So $|L| \leq |R|$. Let $V_{low} = \{v | d(v) \leq 8k\}$. $L_{low} = L \cap V_{low}$, and same for $S_{low}, R_{low}$. 
+
+    \textbf{Assumption 1}: We already know $k, |L|, |S_{low}|$. We will prove later that we don't need exact true value to make the algorithm work. Actually, we just need the value to be inside a range between the exact true value, which can be done by binary search.
+
+    \textbf{Assumption 2}: $|R| = \Omega(n)$. This means $G$ does not have a minimum vertex cut that covers most of the verticies. Examples include complete graph, or some highly connected graph. 
+
+    \textbf{Assumption 3}: $m \leq nk$. This clearly not applies to many graphs. However, we can achieve this by computing a \textit{k-connectivity certificate} \cite{nagamochi_ibaraki} for $G$, which results in this. 
+
+    We divide the algorithm into three cases depends on $L$ and $S_{low}$. 
+  \end{subsection}
+
+  \begin{subsection}{Case 1: Large $L$}
+    In this case, we assume $|L| > \frac{k}{polylog(n)}$. We independently sample each vertecx with probability $\frac1k$, let the sampled set be $T$. 
+
+    \textbf{Claim 1}: With some probability, $T$ contains exactly one vertex from $L$, no vertex from $S$, and all others (at least one) from $R$. 
+
+    Proof: $$\mathbb{P}[|L \cap T| = 1] \cdot \mathbb{P}[|S \cap T| = 0] \cdot \mathbb{P}[|R \cap T| \geq 1]$$
+    $$ \geq c \cdot \mathbb{P}[|L \cap T| = 1] \cdot \mathbb{P}[|S \cap T| = 0]$$
+    $$ \geq c \cdot (\frac{|L|}{k} \cdot (1 - \frac1k)^{|L| - 1}) \cdot (1 - \frac1k)^{|S|}$$
+    $$ \geq c \cdot \frac{|L|}{k} \cdot (1 - \frac1k)^{|L| + |S| - 1}$$
+    $$ \geq \Omega(\frac{1}{\log n})$$
+
+    We can repeat polylog(n) times to increase probability. 
+
+    After we obtained $T$, we can use modified \textit{Isolating Cuts} \cite{chekuri_quanrud} to compute the final results. We will skip the detail of this part as it will distract our main focus. 
+  \end{subsection}
+
+  \begin{subsection}{Case 2: Small $L$ with small $S_{low}$}
+    In this case, we assume $|L| < \frac{k}{polylog(n)}$ and $S_{low} < |L| \cdot polylog(n)$. 
+
+    \textbf{Claim 2}: $|L \cup S| \leq 2k$ 
+
+    Proof: $|L| < \frac{k}{polylog(n)}$, $|S| = k$. 
+
+    \textbf{Claim 3}: $L = L_{low} \subseteq V_{low}$
+
+    Proof: For every vertex $x$ in $L$, all its neighbours must in $L \cup S$. So $d(x) \leq L + k \leq 2k < 8k$. 
+
+    \textbf{Claim 4}: $|R_{low}| \geq |L_{low}|$
+
+    Proof: If $k \geq \frac{n}{8}$, then all verticies are in $V_{low}$, the claim is trivial. Therefore, assume $k < \frac{n}{8}$. Notice that 
+    $$ 8k \cdot |V - V_{low}| \leq \sum_v d(v) = 2m \leq 2nk$$
+    Therefore, we have $|V - V_{low}| \leq \frac{n}{4}$, so $|V_{low}| \geq \frac{3}{4}n$. Also, by claim 2, we have $|R| \geq \frac{3}{4}n$. Therefore, $|R_{low}| \geq (1 - (1 - \frac34) - (1 - \frac34))n \geq \frac{n}{2} \geq |L_{low}|$. 
+
+    We can independently sample vertex from $V_{low}$ with probability $\frac{1}{|L| \cdot polylog(n)}$ and get in to the same situation as in case 1. The detailed analysis is similar. 
+    
+  \end{subsection}
+
+  \begin{subsection}{Case 3: Small $L$ with large $S_{low}$}
+    In this case, we assume $|L| < \frac{k}{polylog(n)}$ and $S_{low} \geq |L| \cdot polylog(n)$. In this case, the sampling method we used in previous cases will not work as there is not a way to sample a desired vertex set with high probability. Therefore, we need to do something different. 
+
+    \textbf{A quick question}: What information do we need to compute the vertex connectivity? 
+
+    Answer: A vertex from $L$ and at least one vertex from $R$. Then, the vertex connectivity can easily be computed by a maxflow. 
+
+    Notice that if we do random sample from $V$, have verticies from $R$ is with very high probability, but have a vertex from $L$ is with very low probability. Actually, you need to sample at least $\tilde{O}(\frac{n}{|L|})$ to make sure there is at least one vertex from $L$ with high probability, call this set $X$. By constant number of sampling, we can assume we have at least one vertex from $R$, call it $r$.
+
+    \textbf{Silly algorithm}: For each vertex $x$ in $X$, compute the maxflow from $x$ to $r$. The minimum cut of the maxflow is the vertex connectivity.
+
+    This algorithm works, but it is too slow. The runtime is $\tilde{O}(\frac{n}{|L|} \cdot m)$. We need to improve it.
+
+    \textbf{Improvement idea}: If we are able to reduce the number of edges during each maxflow computation to $\tilde{O}(k|L|)$, then we can reduce the total runtime to $\tilde{O}(\frac{n}{|L|} \cdot k|L|) = \tilde{O}(nk) = \tilde{O}(m)$. (This $m$ is the number of edges before we compute the k-connectivity certificate)
+
+    \textbf{Lemma 1}: For each vertex $x$ in $X$, we can compute a new graph which keeps the vertex connectivity and has at most $\tilde{O}(k|L|)$ edges. We call this graph a \textit{kernel}. 
+
+    We now elaborate on how to construct the kernel. Assume we already have vertex $x \in L$, which is from $X$. Independently sample each vertex from $V$ with probability $\frac{1}{|L|}$ into set $T$. Let $N[x] = N(x) \cup \{x\}$ and $T_x = T - N[x]$.
+
+    \textbf{Claim 5}: $|(L \cup S) - N[x]| < |L|$
+
+    Proof: Notice that $|L \cup S| \leq |L| + k$. Also, $|N[x]| = |N(x)| + 1 \geq k + 1 > k$. Therefore, $|(L \cup S) - N[x]| < |L| + k - k = |L|$.
+    
+    If no verticies we sampled are from $|(L \cup S) - N[x]|$, then $T_x \subseteq R$. By claim 5, if we sample with probability $\frac{1}{|L|}$, we will have $T_x \subseteq R$ with high probability.
+
+    After this, we contract $T_x$ into a single vertex $t_x$. Notice that if $x \in L$ and $T_x \subseteq R$, then a $(x, t_x)$ maxflow will give us the vertex connectivity of $G$. 
+
+    \textbf{Observations}:
+    \begin{enumerate}
+      \item $\forall \ v \in N(x) \cap N(t_x)$, it must be in $S$. 
+      \item By Mengers theorem, there exists $k$ vertex disjoint paths between $x$ and $t_x$. Notice that if any path include more than one neighbour of $x$, then the path can be changed to directly connect to $x$ without affect other paths. Same for $t_x$. Therefore, we can have each path only contains one neighbour of $x$ and one neighbour of $t_x$. 
+    \end{enumerate}
+
+    By these observations, we can do following removals \footnote{If reader find the following removal procedures hard to understand, there is a graph illustration in the appendix.}:
+    \begin{enumerate}
+      \item Remove all $v \in N(x) \cap N(t_x)$ and add back later. 
+      \item Remove all internal edges of $N(x)$ and $N(t_x)$. 
+      \item After first two, remove all $v \in N(T_x)$ s.t. $t_x$ is the only neighbour of $v$. This happens if $t \in N(v) \subseteq N[t]$. 
+    \end{enumerate}
+
+    \textbf{Claim 6}: After these removals, the graph has $\tilde{O}(k|L|)$ edges, which is the kernel we want.
+
+    Proof: Let $N_x$ be the remaining neighbours of $x$, $N_t$ be the remaining neighbours of $t_x$, $F'$ be all verticies left. There are three kinds of edges remain:
+    \begin{enumerate}
+      \item [$E1$]: $N_x \times (F' \cup N_t)$ 
+      \item [$E2$]: $F' \times (F' \cup N_t)$
+      \item [$E3$]: incident with $x$ and $t_x$
+    \end{enumerate}
+    We first prove $|E1 \cup E2| = \tilde{O}(k|L|)$ whp. We prove by showing the endpoints and their degree are bounded. 
+
+    \textbf{Claim 7}: $\forall \ v \in N_x \cup F', d_{G - N_x} (v) \leq \tilde{O}(|L|)$ whp. 
+
+    Proof: We prove a stronger claim $\forall \ v \in N[x] \cup F', d_{G - N[x]} (v) \leq 8k$ whp. Assume not, then $d_{G - N[x]} (v) > |L| \cdot polylog(n)$, then at least one of $v$'s neighbour will be sampled into $T_x$ whp, which makes $v \in N(T_x) = N_t$, thus $v \notin N_x \cup F'$. Contradiction. 
+
+    \textbf{Claim 8}: $|N_x \cup F'| = O(k)$ 
+
+    Proof: Note that $|N_x| \leq |L| + k < 2k$, so we just need to show $|F'| = O(k)$. We go back to the origin graph $G$. 
+
+    \textbf{Claim 8.1}: $|N(x)| < k + |L|$
+
+    Proof: $|N(x)| \leq |L| \cup |S|$. 
+
+    \textbf{Claim 8.2}: $|S_{low} - N(x)| \leq |L|$
+
+    Proof: direct result of claim 5. 
+
+    \textbf{Claim 8.3}: $\forall \ v \in F'$, whp, at least $k - |L| \cdot polylog(n)$ neighbours of $v$ are in $N(x)$.
+
+    Proof: derect result of claim 7. 
+
+    By claim 8.1, 8.2, 8.3, we can compute the number of neighbours of $v \in F'$ in $S_{low}$, which is 
+    $$ \geq \text{Total number of neighbours in $N[x]$ - verticies in ($N[x] - S_{low}$)}\footnote{If reader find this hard to follow, there is a graph illutration in appendix.}$$
+    $$ \geq k - |L| \cdot polylog(n) - (|N[x] - (|S_{low})| - |L|)$$
+    $$ \geq \Omega(|S_{low}|)$$
+
+    We know that total numner of edges indident to $S_{low}$ is $O(k|S_{low}|)$, each vertex in $F'$ will take at least $|S_{low}|$ edges, so $$ |F'| = O(\frac{k \cdot |S_{low}|}{ |S_{low}|}) = O(k)$$
+    This proves claim 8.
+
+    By claim 7 and 8, we have $|E1 \cup E2| = O(k|L|)$.
+
+    For $E3$, the numner of edges incident to $x$ is bounded by $N[x] \leq 2k$. For edges indident to $t_x$, it must be incident to some edge in $E1 \cup E2$, or it would be removed in removal three. So it is also bounded by $O(k|L|)$. We proved lemma 1. 
+
+  \end{subsection}
+
+  \begin{subsection}{Algorithm aspect of Case 3}
+    Building kernel can be done in sublinear time. We won't cover it in this report as it requires some more technical details in data structures and linear algebra. 
+
+    Let's now go back to reality, where we don't have assumption 1. It turns out that we can we don't need the exact value of $k$ and $|L|$ for the kernel to be constructed successfully. If we have $\kappa$ and $\ell$, we only need to make sure $\kappa \geq k$ and $\frac{|L|}{2} \leq \ell \leq |L|$, then it will work. Otherwise, it will either return no cut or a cut that is too large. This results in the algorithm for case 3 assume we know $\kappa$:
+    \begin{algorithm}
+      \caption{Case 3}
+      \begin{algorithmic}
+        \State Let $X$ be the set of sampled verticies
+        \For {each $x \in X$}
+          \For {$i$ in 1 to $log(n)$}
+            \State Let $\ell = 2^i$ 
+            \State Sample $T$ with $\ell, \kappa$ 
+            \State Compute kernel and run maxflow
+            \State Repeat $log(n)$ times
+          \EndFor
+        \EndFor
+        \State Return the smallest cut found
+      \end{algorithmic}
+    \end{algorithm}
+  \end{subsection}
+
+  \begin{section}{Putting things together}
+    \begin{algorithm}
+      \caption{Vertex connectivity}
+    \begin{algorithmic}
+    \State Let $k = \frac{n}{2}$
+    \State Compute $k$-connectivity certificate for $G$
+    \State Do case 1, 2, 3
+    \State Verify and return the smallest cut found
+    \State Binary search for $k$ and return the smallest cut found
+    \end{algorithmic}
+  \end{algorithm}
+  \end{section}
+  
+\end{section}
+
+\bibliographystyle{acm}
+\bibliography{ref}
+
+\includepdf[pages=-]{outline.pdf}
+
+
+
+\end{document}

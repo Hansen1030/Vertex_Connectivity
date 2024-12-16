@@ -1,0 +1,33 @@
+\begin{thebibliography}{1}
+
+\bibitem{chekuri_quanrud}
+{\sc Chekuri, C., and Quanrud, K.}
+\newblock Isolating cuts, (bi-)submodularity, and faster algorithms for global
+  connectivity problems.
+\newblock {\em CoRR abs/2103.12908\/} (2021).
+
+\bibitem{max_flow_min_cost}
+{\sc Chen, L., Kyng, R., Liu, Y.~P., Peng, R., Gutenberg, M.~P., and Sachdeva,
+  S.}
+\newblock Maximum flow and minimum-cost flow in almost-linear time.
+\newblock {\em arXiv:2203.00671\/} (2022).
+
+\bibitem{vertex_connectivity_henzinger}
+{\sc Henzinger, M.~R., Rao, S., and Gabow, H.~N.}
+\newblock Computing vertex connectivity: New bounds from old techniques.
+\newblock {\em Journal of Algorithms 34}, 2 (2000), 222--250.
+\newblock Announced at FOCS'96.
+
+\bibitem{vertex_connectivity}
+{\sc Li, J., Nanongkai, D., Panigrahi, D., Saranurak, T., and
+  Yingchareonthawornchai, S.}
+\newblock Vertex connectivity in poly-logarithmic max-flows.
+\newblock {\em arXiv:2104.00104\/} (2021).
+
+\bibitem{nagamochi_ibaraki}
+{\sc Nagamochi, H., and Ibaraki, T.}
+\newblock A linear-time algorithm for finding a sparse k-connected spanning
+  subgraph of a k-connected graph.
+\newblock {\em Algorithmica 7}, 5\&6 (1992), 583--596.
+
+\end{thebibliography}
